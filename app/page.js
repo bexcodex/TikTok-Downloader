@@ -125,10 +125,10 @@ export default function Home() {
                 <h3 className="text-xl font-semibold mb-4 flex items-center"><VideoIcon /> Video</h3>
                 <video controls src={result.video.download_url} className="w-full rounded-lg mb-4" poster={result.video.cover}></video>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <a href={result.video.download_url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center p-4 text-center rounded-lg bg-green-600/80 hover:bg-green-600 transition-all duration-300 transform hover:scale-105">
+                    <a href={`/api/download-proxy?url=${encodeURIComponent(result.video.download_url)}&fileName=${result.video.id}&type=video`} className="flex items-center justify-center p-4 text-center rounded-lg bg-green-600/80 hover:bg-green-600 transition-all duration-300 transform hover:scale-105">
                         <DownloadIcon /> Download (No WM)
                     </a>
-                    <a href={result.video.download_url_wm} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center p-4 text-center rounded-lg bg-yellow-600/80 hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105">
+                    <a href={`/api/download-proxy?url=${encodeURIComponent(result.video.download_url_wm)}&fileName=${result.video.id}_wm&type=video`} className="flex items-center justify-center p-4 text-center rounded-lg bg-yellow-600/80 hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105">
                         <DownloadIcon /> Download (WM)
                     </a>
                 </div>
@@ -160,7 +160,7 @@ export default function Home() {
                             <p className="font-bold">{result.music.title}</p>
                             <p className="text-sm text-gray-400">{result.music.author}</p>
                         </div>
-                        <a href={result.music.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center p-3 text-center rounded-lg bg-purple-600/80 hover:bg-purple-600 transition-all duration-300 transform hover:scale-105">
+                        <a href={`/api/download-proxy?url=${encodeURIComponent(result.music.url)}&fileName=${result.music.id}&type=music`} className="flex items-center justify-center p-3 text-center rounded-lg bg-purple-600/80 hover:bg-purple-600 transition-all duration-300 transform hover:scale-105">
                             <DownloadIcon />
                         </a>
                     </div>
