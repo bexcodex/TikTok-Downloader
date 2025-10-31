@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import JSZip from 'jszip';
 
 // Helper function to format large numbers
 const formatNumber = (num) => {
@@ -74,6 +75,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [downloading, setDownloading] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -101,6 +103,60 @@ export default function Home() {
       setError('Failed to fetch data from the server.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownload = async (downloadUrl, fileName) => {
+    setDownloading(fileName);
+    try {
+      const res = await fetch(downloadUrl);
+      if (!res.ok) throw new Error(`Failed to fetch file: ${res.statusText}`);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      setError(`Download failed for ${fileName}. This may be due to browser security restrictions (CORS).`);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const handleImageZipDownload = async (imageUrls, fileName) => {
+    setDownloading(fileName);
+    try {
+      const zip = new JSZip();
+      const imagePromises = imageUrls.map(async (url) => {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+        const blob = await response.blob();
+        return { name: url.split('/').pop(), blob };
+      });
+
+      const images = await Promise.all(imagePromises);
+      images.forEach((image, index) => {
+        zip.file(`image_${index + 1}.jpg`, image.blob);
+      });
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const objectUrl = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = `${fileName}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+
+    } catch (err) {
+        setError(`ZIP creation failed. This is likely due to browser security restrictions (CORS) preventing image downloads.`);
+    } finally {
+        setDownloading(null);
     }
   };
 
@@ -177,12 +233,12 @@ export default function Home() {
                 <h3 className="text-lg sm:text-xl font-semibold mb-3 flex items-center"><VideoIcon /> Video</h3>
                 <video controls src={result.video.download_url} className="w-full rounded-lg mb-3" poster={result.video.cover}></video>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <a href={`/api/download-proxy?url=${encodeURIComponent(result.video.download_url)}&fileName=${result.video.id}&type=video`} className="flex items-center justify-center p-3 sm:p-4 text-center rounded-lg bg-green-600/80 hover:bg-green-600 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base">
-                        <DownloadIcon /> Download (No WM)
-                    </a>
-                    <a href={`/api/download-proxy?url=${encodeURIComponent(result.video.download_url_wm)}&fileName=${result.video.id}_wm&type=video`} className="flex items-center justify-center p-3 sm:p-4 text-center rounded-lg bg-yellow-600/80 hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base">
-                        <DownloadIcon /> Download (WM)
-                    </a>
+                    <button onClick={() => handleDownload(result.video.download_url, `${result.video.id}.mp4`)} disabled={downloading} className="flex items-center justify-center p-3 sm:p-4 text-center rounded-lg bg-green-600/80 hover:bg-green-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 text-sm sm:text-base">
+                        {downloading === `${result.video.id}.mp4` ? 'Downloading...' : <><DownloadIcon /> Download (No WM)</>}
+                    </button>
+                    <button onClick={() => handleDownload(result.video.download_url_wm, `${result.video.id}_wm.mp4`)} disabled={downloading} className="flex items-center justify-center p-3 sm:p-4 text-center rounded-lg bg-yellow-600/80 hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 text-sm sm:text-base">
+                        {downloading === `${result.video.id}_wm.mp4` ? 'Downloading...' : <><DownloadIcon /> Download (WM)</>}
+                    </button>
                 </div>
               </div>
             )}
@@ -197,9 +253,9 @@ export default function Home() {
                     </a>
                   ))}
                 </div>
-                <a href={`/api/download-images?urls=${encodeURIComponent(JSON.stringify(result.image.image_url))}`} className="flex items-center justify-center p-3 sm:p-4 text-center rounded-lg bg-green-600/80 hover:bg-green-600 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base">
-                    <DownloadIcon /> Download All Images (ZIP)
-                </a>
+                <button onClick={() => handleImageZipDownload(result.image.image_url, result.image.id)} disabled={downloading} className="flex items-center justify-center p-3 sm:p-4 text-center rounded-lg bg-green-600/80 hover:bg-green-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 text-sm sm:text-base w-full">
+                    {downloading === result.image.id ? 'Zipping...' : <><DownloadIcon /> Download All Images (ZIP)</>}
+                </button>
               </div>
             )}
             
@@ -212,9 +268,9 @@ export default function Home() {
                             <p className="font-bold text-sm sm:text-base">{result.music.title}</p>
                             <p className="text-xs sm:text-sm text-gray-400">{result.music.author}</p>
                         </div>
-                        <a href={`/api/download-proxy?url=${encodeURIComponent(result.music.url)}&fileName=${result.music.id}&type=music`} className="flex items-center justify-center p-2 sm:p-3 text-center rounded-lg bg-purple-600/80 hover:bg-purple-600 transition-all duration-300 transform hover:scale-105">
-                            <DownloadIcon />
-                        </a>
+                        <button onClick={() => handleDownload(result.music.url, `${result.music.id}.mp3`)} disabled={downloading} className="flex items-center justify-center p-2 sm:p-3 text-center rounded-lg bg-purple-600/80 hover:bg-purple-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50">
+                            {downloading === `${result.music.id}.mp3` ? '...' : <DownloadIcon />}
+                        </button>
                     </div>
                 </div>
             )}
