@@ -65,8 +65,8 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
       <div className="w-full max-w-3xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
               TikTok Downloader
             </span>
@@ -76,20 +76,20 @@ export default function Home() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mb-12">
+        <form onSubmit={handleSubmit} className="mb-8 sm:mb-12">
           <div className="relative">
             <input
               type="text"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="Paste TikTok URL here..."
-              className="w-full p-5 pr-28 rounded-full bg-gray-800 border-2 border-gray-700 focus:outline-none focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300 text-lg"
+              className="w-full p-4 pr-28 sm:p-5 sm:pr-32 rounded-full bg-gray-800 border-2 border-gray-700 focus:outline-none focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300 text-base sm:text-lg"
               required
             />
             <button
               type="submit"
               disabled={loading}
-              className="absolute top-1/2 right-2.5 -translate-y-1/2 px-6 py-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-500 disabled:to-gray-600 text-white font-semibold transition-all duration-300 transform hover:scale-105 disabled:scale-100"
+              className="absolute top-1/2 right-2 sm:right-2.5 -translate-y-1/2 px-4 sm:px-6 py-2 sm:py-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-500 disabled:to-gray-600 text-white font-semibold transition-all duration-300 transform hover:scale-105 disabled:scale-100"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -108,13 +108,13 @@ export default function Home() {
         )}
 
         {result && (
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-6 sm:p-8 animate-fade-in-up">
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-4 sm:p-8 animate-fade-in-up">
             <div className="flex flex-col sm:flex-row items-center gap-6 mb-8">
-              <img src={result.author.avatar} alt={result.author.nickname} className="w-24 h-24 rounded-full border-4 border-gray-700" />
+              <img src={result.author.avatar} alt={result.author.nickname} className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-gray-700" />
               <div className="text-center sm:text-left">
                 <h2 className="text-2xl font-bold">{result.author.nickname}</h2>
                 <p className="text-gray-400">@{result.author.username}</p>
-                <p className="mt-2 text-gray-300 max-w-prose">
+                <p className="mt-2 text-gray-300 max-w-prose break-words">
                     {result.video?.desc || result.image?.desc}
                 </p>
               </div>
