@@ -3,8 +3,6 @@ import { NextResponse } from 'next/server';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
 const ttdl = async (url) => {
   try {
     if (url.includes("vm.tiktok.com") || url.includes("vt.tiktok.com")) {
