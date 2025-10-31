@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 const ttdl = async (url) => {
   try {
     if (url.includes("vm.tiktok.com") || url.includes("vt.tiktok.com")) {
@@ -50,49 +52,52 @@ const ttdl = async (url) => {
 
     if (!data) throw new Error("tiktok api ratelimit");
 
+    const aweme = data.aweme_list?.[0];
+    if (!aweme) throw new Error("No data found");
+
     const result = {
       success: true,
       music: {
-        id: data.aweme_list[0].music.id_str,
-        title: data.aweme_list[0].music.title,
-        author: data.aweme_list[0].music.author,
-        url: data.aweme_list[0].music.play_url.uri,
-        duration: data.aweme_list[0].music.duration,
-        cover: data.aweme_list[0].music.cover_thumb.url_list[0],
-        album: data.aweme_list[0].music.album,
+        id: aweme.music?.id_str || "",
+        title: aweme.music?.title || "",
+        author: aweme.music?.author || "",
+        url: aweme.music?.play_url?.uri || "",
+        duration: aweme.music?.duration || 0,
+        cover: aweme.music?.cover_thumb?.url_list?.[0] || "",
+        album: aweme.music?.album || "",
       },
-      statistics: data.aweme_list[0].statistics,
+      statistics: aweme.statistics || {},
       author: {
-        id: data.aweme_list[0].author.uid,
-        username: data.aweme_list[0].author.unique_id,
-        nickname: data.aweme_list[0].author.nickname,
-        avatar: data.aweme_list[0].author.avatar_thumb.url_list[0],
-        region: data.aweme_list[0].author.region,
+        id: aweme.author?.uid || "",
+        username: aweme.author?.unique_id || "",
+        nickname: aweme.author?.nickname || "",
+        avatar: aweme.author?.avatar_thumb?.url_list?.[0] || "",
+        region: aweme.author?.region || "",
       }
     };
     delete result.statistics.aweme_id;
 
-    if (data.aweme_list[0].image_post_info) {
+    if (aweme.image_post_info) {
       result.image = {
-        id: data.aweme_list[0].aweme_id,
-        desc: data.aweme_list[0].desc,
-        cover: data.aweme_list[0].video.cover.url_list[0],
-        dynamic_cover: data.aweme_list[0].video.dynamic_cover.url_list[0],
-        origin_cover: data.aweme_list[0].video.origin_cover.url_list[0],
-        image_url: data.aweme_list[0].image_post_info.images.map(i => i.display_image.url_list[0])
+        id: aweme.aweme_id || "",
+        desc: aweme.desc || "",
+        cover: aweme.video?.cover?.url_list?.[0] || "",
+        dynamic_cover: aweme.video?.dynamic_cover?.url_list?.[0] || "",
+        origin_cover: aweme.video?.origin_cover?.url_list?.[0] || "",
+        image_url: aweme.image_post_info.images?.map(i => i.display_image?.url_list?.[0] || "") || []
       };
     } else {
       result.video = {
-        id: data.aweme_list[0].aweme_id,
-        desc: data.aweme_list[0].desc,
-        cover: data.aweme_list[0].video.cover.url_list[0],
-        dynamic_cover: data.aweme_list[0].video.dynamic_cover.url_list[0],
-        origin_cover: data.aweme_list[0].video.origin_cover.url_list[0],
-        download_url: data.aweme_list[0].video.play_addr.url_list[0],
-        download_url_wm: data.aweme_list[0].video.download_addr.url_list[0],
-        duration: parseInt(data.aweme_list[0].video.duration / 1000),
-        size: data.aweme_list[0].video.play_addr.data_size,
-        wm_size: data.aweme_list[0].video.download_addr.data_size
+        id: aweme.aweme_id || "",
+        desc: aweme.desc || "",
+        cover: aweme.video?.cover?.url_list?.[0] || "",
+        dynamic_cover: aweme.video?.dynamic_cover?.url_list?.[0] || "",
+        origin_cover: aweme.video?.origin_cover?.url_list?.[0] || "",
+        download_url: aweme.video?.play_addr?.url_list?.[0] || "",
+        download_url_wm: aweme.video?.download_addr?.url_list?.[0] || "",
+        duration: parseInt(aweme.video?.duration / 1000) || 0,
+        size: aweme.video?.play_addr?.data_size || 0,
+        wm_size: aweme.video?.download_addr?.data_size || 0
       };
     }
 
