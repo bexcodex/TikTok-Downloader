@@ -72,8 +72,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-  const [downloading, setDownloading] = useState(new Set());
-  const [downloadQueue, setDownloadQueue] = useState([]);
+  const [toast, setToast] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -84,9 +83,7 @@ export default function Home() {
     try {
       const response = await fetch('/api/tiktok', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url }),
       });
 
@@ -104,133 +101,60 @@ export default function Home() {
     }
   };
 
-  const addToDownloading = (fileName) => {
-    setDownloading(prev => new Set([...prev, fileName]));
-  };
-
-  const removeFromDownloading = (fileName) => {
-    setDownloading(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(fileName);
-      return newSet;
-    });
-  };
-
-  const addToQueue = (fileName) => {
-    setDownloadQueue(prev => [...prev, { fileName, timestamp: Date.now() }]);
-    setTimeout(() => {
-      setDownloadQueue(prev => prev.filter(item => item.fileName !== fileName));
-    }, 3000);
-  };
-
-  const handleDownload = async (downloadUrl, fileName) => {
-    addToDownloading(fileName);
-    addToQueue(fileName);
+  const handleDownload = (downloadUrl, fileName) => {
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = fileName;
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     
-    // Run download in background - don't await
-    (async () => {
-      try {
-        const res = await fetch(downloadUrl, {
-          method: 'GET',
-          redirect: 'follow', // Follow redirects automatically
-          headers: {
-            'Accept': '*/*',
-          }
-        });
-        
-        if (!res.ok) throw new Error(`Failed to fetch file: ${res.statusText}`);
-        const blob = await res.blob();
-        const objectUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = objectUrl;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        // Clean up after a delay to ensure download started
-        setTimeout(() => URL.revokeObjectURL(objectUrl), 100);
-      } catch (err) {
-        setError(`Download failed for ${fileName}.`);
-      } finally {
-        removeFromDownloading(fileName);
-      }
-    })();
+    showToast(`Download started: ${fileName}`);
   };
 
   const handleImageZipDownload = async (imageUrls, fileName) => {
     const zipFileName = `${fileName}.zip`;
-    addToDownloading(zipFileName);
-    addToQueue(zipFileName);
     
-    // Run zip creation and download in background
-    (async () => {
-      try {
-        const zip = new JSZip();
-        const imagePromises = imageUrls.map(async (url, index) => {
-          try {
-            const response = await fetch(url, {
-              method: 'GET',
-              redirect: 'follow', // Follow redirects
-              headers: {
-                'Accept': 'image/*',
-              }
-            });
-            if (!response.ok) throw new Error(`Failed to fetch image ${index + 1}`);
-            const blob = await response.blob();
-            return { name: `image_${index + 1}.jpg`, blob };
-          } catch (err) {
-            console.error(`Failed to fetch image ${index + 1}:`, err);
-            return null;
-          }
-        });
+    try {
+      showToast('Creating ZIP file...');
+      
+      const zip = new JSZip();
+      
+      const imagePromises = imageUrls.map(async (url, index) => {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to fetch image ${index + 1}`);
+        const blob = await response.blob();
+        zip.file(`image_${index + 1}.jpg`, blob);
+      });
 
-        const images = await Promise.all(imagePromises);
-        const validImages = images.filter(img => img !== null);
-        
-        if (validImages.length === 0) {
-          throw new Error('No images could be downloaded');
-        }
-        
-        validImages.forEach((image) => {
-          zip.file(image.name, image.blob);
-        });
+      await Promise.all(imagePromises);
 
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
-        const objectUrl = URL.createObjectURL(zipBlob);
-        const a = document.createElement('a');
-        a.href = objectUrl;
-        a.download = zipFileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        setTimeout(() => URL.revokeObjectURL(objectUrl), 100);
-      } catch (err) {
-        setError(`ZIP creation failed: ${err.message}`);
-      } finally {
-        removeFromDownloading(zipFileName);
-      }
-    })();
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const objectUrl = URL.createObjectURL(zipBlob);
+      
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = zipFileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+      
+      showToast('ZIP download started!');
+
+    } catch (err) {
+      setError(`ZIP creation failed: ${err.message}`);
+    }
+  };
+
+  const showToast = (message) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
   };
 
   return (
     <main className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-2">
-      {/* Download Queue Notification */}
-      {downloadQueue.length > 0 && (
-        <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
-          {downloadQueue.map((item) => (
-            <div key={item.fileName} className="bg-blue-600/90 backdrop-blur-sm border border-blue-500 text-white p-3 rounded-lg shadow-lg animate-fade-in flex items-center gap-3">
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              <div className="flex-grow">
-                <p className="font-semibold text-sm">Downloading...</p>
-                <p className="text-xs text-blue-100 truncate">{item.fileName}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      
       <div className="w-full max-w-3xl mx-auto">
         <div className="text-center mb-8 sm:mb-12">
           <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
@@ -275,7 +199,7 @@ export default function Home() {
         )}
 
         {result && (
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-3 sm:p-6 animate-fade-in">
+          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-3 sm:p-6 animate-fade-in-up">
             <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
               <img src={result.author.avatar} alt={result.author.nickname} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-gray-700" />
               <div className="text-center sm:text-left">
@@ -302,11 +226,17 @@ export default function Home() {
                 <h3 className="text-lg sm:text-xl font-semibold mb-3 flex items-center"><VideoIcon /> Video</h3>
                 <video controls src={result.video.download_url} className="w-full rounded-lg mb-3" poster={result.video.cover}></video>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <button onClick={() => handleDownload(result.video.download_url, `${result.video.id}.mp4`)} disabled={downloading.has(`${result.video.id}.mp4`)} className="flex items-center justify-center p-3 sm:p-4 text-center rounded-lg bg-green-600/80 hover:bg-green-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 text-sm sm:text-base">
-                        {downloading.has(`${result.video.id}.mp4`) ? 'Downloading...' : <><DownloadIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" /> Download (No WM)</>}
+                    <button 
+                      onClick={() => handleDownload(result.video.download_url, `${result.video.id}.mp4`)} 
+                      className="flex items-center justify-center p-3 sm:p-4 text-center rounded-lg bg-green-600/80 hover:bg-green-600 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base"
+                    >
+                        <DownloadIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" /> Download (No WM)
                     </button>
-                    <button onClick={() => handleDownload(result.video.download_url_wm, `${result.video.id}_wm.mp4`)} disabled={downloading.has(`${result.video.id}_wm.mp4`)} className="flex items-center justify-center p-3 sm:p-4 text-center rounded-lg bg-yellow-600/80 hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 text-sm sm:text-base">
-                        {downloading.has(`${result.video.id}_wm.mp4`) ? 'Downloading...' : <><DownloadIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" /> Download (WM)</>}
+                    <button 
+                      onClick={() => handleDownload(result.video.download_url_wm, `${result.video.id}_wm.mp4`)} 
+                      className="flex items-center justify-center p-3 sm:p-4 text-center rounded-lg bg-yellow-600/80 hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base"
+                    >
+                        <DownloadIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" /> Download (WM)
                     </button>
                 </div>
               </div>
@@ -319,14 +249,20 @@ export default function Home() {
                   {result.image.image_url.map((imgUrl, index) => (
                     <div key={index} className="relative group">
                       <img src={imgUrl} alt={`Image ${index + 1}`} className="w-full h-auto rounded-lg" />
-                      <button onClick={() => handleDownload(imgUrl, `${result.image.id}_${index + 1}.jpg`)} disabled={downloading.has(`${result.image.id}_${index + 1}.jpg`)} className="absolute top-2 right-2 bg-black/50 p-1.5 rounded-full text-white transition-opacity disabled:opacity-50">
-                        {downloading.has(`${result.image.id}_${index + 1}.jpg`) ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <DownloadIcon className="h-5 w-5" />}
+                      <button 
+                        onClick={() => handleDownload(imgUrl, `${result.image.id}_${index + 1}.jpg`)} 
+                        className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 p-1.5 rounded-full text-white transition-all"
+                      >
+                        <DownloadIcon className="h-5 w-5" />
                       </button>
                     </div>
                   ))}
                 </div>
-                <button onClick={() => handleImageZipDownload(result.image.image_url, result.image.id)} disabled={downloading.has(`${result.image.id}.zip`)} className="flex items-center justify-center p-3 sm:p-4 text-center rounded-lg bg-green-600/80 hover:bg-green-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 text-sm sm:text-base w-full">
-                    {downloading.has(`${result.image.id}.zip`) ? 'Creating ZIP...' : <><DownloadIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" /> Download All Images (ZIP)</>}
+                <button 
+                  onClick={() => handleImageZipDownload(result.image.image_url, result.image.id)} 
+                  className="flex items-center justify-center p-3 sm:p-4 text-center rounded-lg bg-green-600/80 hover:bg-green-600 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base w-full"
+                >
+                    <DownloadIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" /> Download All Images (ZIP)
                 </button>
               </div>
             )}
@@ -340,13 +276,23 @@ export default function Home() {
                             <p className="font-bold text-sm sm:text-base">{result.music.title}</p>
                             <p className="text-xs sm:text-sm text-gray-400">{result.music.author}</p>
                         </div>
-                        <button onClick={() => handleDownload(result.music.url, `${result.music.id}.mp3`)} disabled={downloading.has(`${result.music.id}.mp3`)} className="flex items-center justify-center p-2 sm:p-3 text-center rounded-lg bg-purple-600/80 hover:bg-purple-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50">
-                            {downloading.has(`${result.music.id}.mp3`) ? '...' : <DownloadIcon className="h-5 w-5" />}
+                        <button 
+                          onClick={() => handleDownload(result.music.url, `${result.music.id}.mp3`)} 
+                          className="flex items-center justify-center p-2 sm:p-3 text-center rounded-lg bg-purple-600/80 hover:bg-purple-600 transition-all duration-300 transform hover:scale-105"
+                        >
+                            <DownloadIcon className="h-5 w-5" />
                         </button>
                     </div>
                 </div>
             )}
 
+          </div>
+        )}
+
+        {/* Toast Notification */}
+        {toast && (
+          <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in z-50">
+            {toast}
           </div>
         )}
       </div>
