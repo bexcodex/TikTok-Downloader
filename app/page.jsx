@@ -3,14 +3,12 @@
 import { useState } from 'react';
 import JSZip from 'jszip';
 
-// Helper function to format large numbers
 const formatNumber = (num) => {
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
   if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
   return num;
 };
 
-// Icon Components
 const DownloadIcon = ({ className = 'h-4 w-4 sm:h-5 sm:w-5' }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -59,7 +57,6 @@ const ShareIcon = () => (
     </svg>
 );
 
-// StatCard component for displaying individual statistics
 const StatCard = ({ icon, label, value }) => (
     <div className="flex items-center p-3 bg-gray-700/50 rounded-lg">
         {icon}
