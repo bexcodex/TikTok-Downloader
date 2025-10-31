@@ -11,7 +11,7 @@ const formatNumber = (num) => {
 };
 
 // Icon Components
-const DownloadIcon = ({ className = 'h-4 w-4 sm:h-5 sm:w-5 mr-2' }) => (
+const DownloadIcon = ({ className = 'h-4 w-4 sm:h-5 sm:w-5' }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
     </svg>
@@ -155,8 +155,6 @@ export default function Home() {
 
     } catch (err) {
         setError(`ZIP creation failed. This is likely due to browser security restrictions (CORS) preventing image downloads.`);
-    } finally {
-        setDownloading(null);
     }
   };
 
@@ -234,10 +232,10 @@ export default function Home() {
                 <video controls src={result.video.download_url} className="w-full rounded-lg mb-3" poster={result.video.cover}></video>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <button onClick={() => handleDownload(result.video.download_url, `${result.video.id}.mp4`)} disabled={downloading} className="flex items-center justify-center p-3 sm:p-4 text-center rounded-lg bg-green-600/80 hover:bg-green-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 text-sm sm:text-base">
-                        {downloading === `${result.video.id}.mp4` ? 'Downloading...' : <><DownloadIcon /> Download (No WM)</>}
+                        {downloading === `${result.video.id}.mp4` ? 'Downloading...' : <><DownloadIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" /> Download (No WM)</>}
                     </button>
                     <button onClick={() => handleDownload(result.video.download_url_wm, `${result.video.id}_wm.mp4`)} disabled={downloading} className="flex items-center justify-center p-3 sm:p-4 text-center rounded-lg bg-yellow-600/80 hover:bg-yellow-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 text-sm sm:text-base">
-                        {downloading === `${result.video.id}_wm.mp4` ? 'Downloading...' : <><DownloadIcon /> Download (WM)</>}
+                        {downloading === `${result.video.id}_wm.mp4` ? 'Downloading...' : <><DownloadIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" /> Download (WM)</>}
                     </button>
                 </div>
               </div>
@@ -248,13 +246,16 @@ export default function Home() {
                 <h3 className="text-lg sm:text-xl font-semibold mb-3 flex items-center"><ImageIcon /> Images</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-3">
                   {result.image.image_url.map((imgUrl, index) => (
-                    <a key={index} href={imgUrl} target="_blank" rel="noopener noreferrer" className="group">
-                      <img src={imgUrl} alt={`Image ${index + 1}`} className="w-full h-auto rounded-lg transition-transform duration-300 group-hover:scale-105" />
-                    </a>
+                    <div key={index} className="relative group">
+                      <img src={imgUrl} alt={`Image ${index + 1}`} className="w-full h-auto rounded-lg" />
+                      <button onClick={() => handleDownload(imgUrl, `${result.image.id}_${index + 1}.jpg`)} disabled={downloading} className="absolute top-2 right-2 bg-black/50 p-1.5 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50">
+                        {downloading === `${result.image.id}_${index + 1}.jpg` ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <DownloadIcon className="h-5 w-5" />}
+                      </button>
+                    </div>
                   ))}
                 </div>
                 <button onClick={() => handleImageZipDownload(result.image.image_url, result.image.id)} disabled={downloading} className="flex items-center justify-center p-3 sm:p-4 text-center rounded-lg bg-green-600/80 hover:bg-green-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 text-sm sm:text-base w-full">
-                    {downloading === result.image.id ? 'Zipping...' : <><DownloadIcon /> Download All Images (ZIP)</>}
+                    {downloading === result.image.id ? 'Zipping...' : <><DownloadIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" /> Download All Images (ZIP)</>}
                 </button>
               </div>
             )}
@@ -269,7 +270,7 @@ export default function Home() {
                             <p className="text-xs sm:text-sm text-gray-400">{result.music.author}</p>
                         </div>
                         <button onClick={() => handleDownload(result.music.url, `${result.music.id}.mp3`)} disabled={downloading} className="flex items-center justify-center p-2 sm:p-3 text-center rounded-lg bg-purple-600/80 hover:bg-purple-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50">
-                            {downloading === `${result.music.id}.mp3` ? '...' : <DownloadIcon />}
+                            {downloading === `${result.music.id}.mp3` ? '...' : <DownloadIcon className="h-5 w-5" />}
                         </button>
                     </div>
                 </div>
