@@ -248,7 +248,7 @@ export default function Home() {
                   {result.image.image_url.map((imgUrl, index) => (
                     <div key={index} className="relative group">
                       <img src={imgUrl} alt={`Image ${index + 1}`} className="w-full h-auto rounded-lg" />
-                      <button onClick={() => handleDownload(imgUrl, `${result.image.id}_${index + 1}.jpg`)} disabled={downloading} className="absolute top-2 right-2 bg-black/50 p-1.5 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50">
+                      <button onClick={() => handleDownload(imgUrl, `${result.image.id}_${index + 1}.jpg`)} disabled={downloading} className="absolute top-2 right-2 bg-black/50 p-1.5 rounded-full text-white transition-opacity disabled:opacity-50">
                         {downloading === `${result.image.id}_${index + 1}.jpg` ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <DownloadIcon className="h-5 w-5" />}
                       </button>
                     </div>
