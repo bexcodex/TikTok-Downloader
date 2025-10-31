@@ -2,8 +2,16 @@
 
 import { useState } from 'react';
 
-const DownloadIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+// Helper function to format large numbers
+const formatNumber = (num) => {
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+  return num;
+};
+
+// Icon Components
+const DownloadIcon = ({ className = 'h-4 w-4 sm:h-5 sm:w-5 mr-2' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
     </svg>
 );
@@ -26,6 +34,40 @@ const ImageIcon = () => (
     </svg>
 );
 
+const PlayIcon = () => (
+    <svg className="w-6 h-6 mr-3 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+    </svg>
+);
+
+const LikeIcon = () => (
+    <svg className="w-6 h-6 mr-3 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+    </svg>
+);
+
+const CommentIcon = () => (
+    <svg className="w-6 h-6 mr-3 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" />
+    </svg>
+);
+
+const ShareIcon = () => (
+    <svg className="w-6 h-6 mr-3 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+    </svg>
+);
+
+// StatCard component for displaying individual statistics
+const StatCard = ({ icon, label, value }) => (
+    <div className="flex items-center p-3 bg-gray-700/50 rounded-lg">
+        {icon}
+        <div>
+            <p className="font-bold text-sm sm:text-base">{formatNumber(value)}</p>
+            <p className="text-xs text-gray-400">{label}</p>
+        </div>
+    </div>
+);
 
 export default function Home() {
   const [url, setUrl] = useState('');
@@ -118,6 +160,16 @@ export default function Home() {
                     {result.video?.desc || result.image?.desc}
                 </p>
               </div>
+            </div>
+
+            <div className="my-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <StatCard icon={<PlayIcon />} label="Plays" value={result.statistics.play_count} />
+                    <StatCard icon={<LikeIcon />} label="Likes" value={result.statistics.digg_count} />
+                    <StatCard icon={<CommentIcon />} label="Comments" value={result.statistics.comment_count} />
+                    <StatCard icon={<ShareIcon />} label="Shares" value={result.statistics.share_count} />
+                    <StatCard icon={<DownloadIcon className="w-6 h-6 mr-3 text-purple-400" />} label="Downloads" value={result.statistics.download_count} />
+                </div>
             </div>
 
             {result.video && (
