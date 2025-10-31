@@ -6,10 +6,6 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata = {
   title: "TikTok Downloader",
   description: "Download TikTok videos without watermark",
-  icons: {
-    icon: '/icon.png',
-    favicon: '/favicon.ico',
-  },
   openGraph: {
     title: "TikTok Downloader",
     description: "Download TikTok videos without watermark",
